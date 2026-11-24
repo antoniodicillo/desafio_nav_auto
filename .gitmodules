@@ -1,0 +1,3 @@
+[submodule "src/culling_games"]
+	path = src/culling_games
+	url = https://github.com/rmnicola/culling_games.git

@@ -1,0 +1,5 @@
+# Keep LF line endings: the code is built and run inside WSL (Linux)
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
