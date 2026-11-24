@@ -181,6 +181,39 @@ ros2 run cg_teleop teleop_keyboard
 
 Use `w`/`a`/`s`/`d` para mover o robô e verificar que tudo funciona.
 
+### Lendo o tópico dos sensores
+
+O tópico `/culling_games/robot_sensors` é publicado com o perfil de QoS
+`sensor_data` (entrega *best effort*). Para lê-lo pela linha de comando, use o
+mesmo perfil:
+
+```bash
+ros2 topic echo --qos-profile sensor_data /culling_games/robot_sensors
+```
+
+Nos nós Python, assine o tópico com `qos_profile_sensor_data`
+(`from rclpy.qos import qos_profile_sensor_data`). Os primeiros segundos após
+iniciar o jogo podem não ter mensagens enquanto o ROS descobre os nós.
+
+## Resultado da verificação (24/11/2026)
+
+Ambiente montado conforme os passos acima e testado nesta máquina:
+
+| Teste | Resultado |
+| --- | --- |
+| `colcon build` (`cg_interfaces`, `cg`, `cg_teleop`) | OK — 3 pacotes em ~3 min (em `/mnt/c`, dentro do OneDrive) |
+| `ros2 run cg maze -- --map test.csv` | OK — janela do Pygame abre via WSLg |
+| Serviços `/move_command`, `/reset`, `/get_map` disponíveis | OK |
+| `/move_command` com `direction: right` | OK — `success=True`, `robot_pos=[1, 2]`, `target_pos=[13, 14]` |
+| `/get_map` | OK — grade 29 × 29 |
+| Tópico `/culling_games/robot_sensors` | OK — ~17 mensagens/s (o código pede 100/s, mas o loop de desenho do Pygame, sem limite de FPS, disputa o processador com o publicador) |
+
+Avisos esperados durante o build, que podem ser ignorados:
+
+- `Clock skew detected`: diferença de relógio entre o Windows e o WSL ao
+  compilar em `/mnt/c`.
+- `pygame was not built with support for avx2`: apenas desempenho de desenho.
+
 ## Editando o código pelo VS Code
 
 Como o projeto está em uma pasta do Windows, basta abri-lo normalmente no VS
