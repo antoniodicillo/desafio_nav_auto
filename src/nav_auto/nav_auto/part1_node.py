@@ -1,14 +1,3 @@
-"""Parte 1 — navegação com mapa.
-
-1. Pede o mapa completo ao simulador (serviço /get_map).
-2. Encontra o caminho mais curto do robô até o alvo com BFS.
-3. Executa o caminho, um passo por vez, pelo serviço /move_command.
-
-Uso:
-    ros2 run nav_auto part1
-    ros2 run nav_auto part1 --ros-args -p step_delay:=0.0
-"""
-
 import time
 
 import rclpy
@@ -31,7 +20,6 @@ class Part1Navigator(Node):
         self.move_client = self.create_client(MoveCmd, '/move_command')
 
     def call(self, client, request):
-        """Chama um serviço e espera a resposta."""
         future = client.call_async(request)
         rclpy.spin_until_future_complete(self, future)
         return future.result()
@@ -45,7 +33,7 @@ class Part1Navigator(Node):
     def run(self):
         self.wait_for_services()
 
-        # 1. Mapa completo
+        # 1. Mapa completo e espera o pygame renderizar
         response = self.call(self.get_map_client, GetMap.Request())
         grid = grid_from_flat(response.occupancy_grid_flattened, response.occupancy_grid_shape)
         start = find_cell(grid, ROBOT)
@@ -70,7 +58,7 @@ class Part1Navigator(Node):
                                f'calculada em {elapsed_ms:.2f} ms')
         print(render(grid, path), flush=True)
 
-        # 3. Execução
+        # 3. Execucao
         for i, direction in enumerate(moves):
             request = MoveCmd.Request()
             request.direction = direction
