@@ -46,35 +46,7 @@ O desafio tem duas partes:
   labirinto usando seus sensores, construir o mapa no caminho e, no fim,
   provar que o mapa construído basta para reproduzir a rota da parte 1.
 
-## 2. Visão geral: dois programas conversando pelo ROS
-
-Quando tudo está rodando, existem dois programas (processos) independentes:
-
-```text
- Terminal 1: ros2 run cg maze                 Terminal 2: ros2 run nav_auto part1 (ou part2)
-┌─────────────────────────────────┐            ┌──────────────────────────────────┐
-│ Simulador (nó "Culling_Games")  │            │ Minha solução (nó part1/part2)   │
-│                                 │  /get_map  │                                  │
-│  • guarda o labirinto (matriz)  │◄───────────│  • pede o mapa (só parte 1)      │
-│  • desenha a janela do Pygame   │/move_command  • decide para onde ir           │
-│  • move o robô quando pedem     │◄───────────│  • manda um movimento por vez    │
-│  • publica os sensores          │  /reset    │  • (parte 2) lê os sensores      │
-│                                 │◄───────────│                                  │
-│                                 │ /culling_games/robot_sensors (100×/s)         │
-│                                 │───────────►│                                  │
-└─────────────────────────────────┘            └──────────────────────────────────┘
-```
-
-- O **simulador** (`src/culling_games`, código do professor) é o "mundo": dono
-  do labirinto e da posição do robô.
-- A **minha solução** (`src/nav_auto`) é o "cérebro": não tem acesso direto à
-  memória do simulador. Tudo o que ela sabe e faz passa pelo ROS.
-
-O arquivo CSV do labirinto só é lido pelo simulador, quando ele começa (ou é
-reiniciado). Durante o jogo, o estado real é a matriz na memória do
-simulador; meus nós nunca abrem o CSV nem a janela.
-
-## 3. Conceitos de ROS 2 usados
+## 2. Conceitos de ROS 2 usados
 
 O **ROS 2** (Robot Operating System) é um conjunto de bibliotecas e
 ferramentas para fazer programas de robótica conversarem entre si. Os
@@ -132,12 +104,12 @@ string down_right
 linha: em um grid 29 × 29, os 29 primeiros itens são a linha 0, os 29
 seguintes a linha 1, e assim por diante.
 
-## 4. O simulador por dentro
+## 3. O simulador por dentro
 
 O código do simulador está em `src/culling_games/src/cg/cg/`. Ele é um
 submódulo git: o código é do professor, e eu só o uso.
 
-### 4.1 O labirinto
+### 3.1 O labirinto
 
 Os labirintos ficam em `src/culling_games/src/cg/maps/` (`1.csv` a `10.csv`
 e `test.csv`). Cada arquivo é um grid 29 × 29 de letras:
@@ -161,7 +133,7 @@ b,f,b,f,b,b,b,b,b,b,b,f,...
 esquerdo. `up` diminui a linha, `down` aumenta, `left` diminui a coluna e
 `right` aumenta.
 
-### 4.2 Os arquivos
+### 3.2 Os arquivos
 
 | Arquivo | Papel |
 | --- | --- |
@@ -171,7 +143,7 @@ esquerdo. `up` diminui a linha, `down` aumenta, `left` diminui a coluna e
 | `Robot.py` | Acha o `r` na matriz, move o robô e lê as 8 células ao redor. |
 | `Utils/` | Ler CSV, achar uma letra na matriz, achatar a matriz, criar a janela. |
 
-### 4.3 Duas *threads* ao mesmo tempo
+### 3.3 Duas threads ao mesmo tempo
 
 O simulador faz duas coisas em paralelo:
 
@@ -277,23 +249,12 @@ Ubuntu 24.04.
 
 ### Passo 1: Instalar o Ubuntu 24.04 no WSL2
 
-No PowerShell (Windows):
+No PowerShell:
 
 ```powershell
 wsl --install -d Ubuntu-24.04
 ```
 
-Na primeira execução, o Ubuntu pede para criar um usuário e uma senha. Para
-conferir que a distribuição roda em WSL **2** (coluna `VERSION`):
-
-```powershell
-wsl -l -v
-```
-
-> **Atenção:** se houver outra distribuição instalada (por exemplo, um
-> `Ubuntu` genérico, sem ROS), sempre abra a correta com
-> `wsl -d Ubuntu-24.04`, ou defina-a como padrão com
-> `wsl --set-default Ubuntu-24.04`.
 
 ### Passo 2: Configurar o locale UTF-8
 
@@ -363,18 +324,6 @@ sudo systemctl disable --now systemd-timesyncd
 
 Para desfazer: `sudo systemctl enable --now systemd-timesyncd`.
 
-Para conferir se o relógio está estável (deve mostrar `saltos: 0`):
-
-```bash
-python3 -c '
-import time
-b = time.time() - time.monotonic(); n = 0
-for _ in range(40):
-    time.sleep(0.25); o = time.time() - time.monotonic()
-    n += abs(o - b) > 0.01; b = o
-print("saltos:", n)'
-```
-
 ### Passo 8: Clonar este repositório
 
 O repositório fica em uma pasta do **Windows** (editada pelo VS Code) e é
@@ -402,11 +351,6 @@ No Ubuntu, entre na mesma pasta pelo caminho `/mnt/c/...`. Neste computador:
 cd /mnt/c/Users/anton/OneDrive/Documentos/GitHub/desafio_nav_auto
 ```
 
-> **Atenção:** compilar em `/mnt/c` é mais lento que no sistema de arquivos
-> do Linux (`~/`), e o OneDrive tenta sincronizar `build/`, `install/` e
-> `log/`. Se o build ficar lento ou der erro de arquivo travado, pause o
-> OneDrive durante o build.
-
 O simulador entra como **submódulo git** em `src/culling_games`, separado do
 meu código. Para atualizá-lo:
 
@@ -430,10 +374,6 @@ mudar o código do `nav_auto`, basta recompilar só ele:
 ```bash
 colcon build --packages-select nav_auto
 ```
-
-> Se você **mover ou renomear a pasta** do repositório, apague `build/`,
-> `install/` e `log/` e compile de novo: o `colcon` grava caminhos absolutos
-> nessas pastas.
 
 ### Passo 10: Testar o simulador
 
@@ -473,7 +413,7 @@ Resultado esperado: `16 passed`.
 
 ## 7. Verificação do ambiente
 
-Testes feitos nesta máquina (24/11 e 26/11/2026):
+Testes feitos nesta máquina:
 
 | Teste | Resultado |
 | --- | --- |
@@ -484,13 +424,6 @@ Testes feitos nesta máquina (24/11 e 26/11/2026):
 | `/get_map` | OK: grade 29 × 29 |
 | Tópico `/culling_games/robot_sensors` | 100 mensagens/s, como o código pede, enquanto o relógio está estável. Com o relógio pulando (Passo 7), o tópico para depois de 2 a 4 s. |
 | Testes unitários | `16 passed` |
-
-Avisos esperados, que podem ser ignorados:
-
-- `Clock skew detected` durante o build: diferença de relógio entre o Windows
-  e o WSL ao compilar em `/mnt/c`.
-- `pygame was not built with support for avx2`: afeta só o desempenho do
-  desenho.
 
 ## 8. Editando pelo VS Code
 
