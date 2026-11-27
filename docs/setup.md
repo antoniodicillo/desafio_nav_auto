@@ -22,7 +22,7 @@ Os detalhes de cada parte do desafio estão em [part1.md](part1.md)
 - [6. Montando o ambiente](#6-montando-o-ambiente)
 - [7. Verificação do ambiente](#7-verificação-do-ambiente)
 - [8. Editando pelo VS Code](#8-editando-pelo-vs-code)
-- [9. Problemas comuns](#9-problemas-comuns)
+- [9. Problemas que enfrentei](#9-problemas-que-enfrentei)
 
 ---
 
@@ -499,7 +499,7 @@ compilar e rodar, use um terminal do Ubuntu dentro do VS Code (menu do
 terminal → **Ubuntu-24.04 (WSL)**) ou abra o Ubuntu e entre na pasta pelo
 caminho `/mnt/c/...`.
 
-## 9. Problemas comuns
+## 9. Problemas que enfrentei
 
 | Sintoma | Causa provável | Solução |
 | --- | --- | --- |
