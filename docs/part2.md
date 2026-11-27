@@ -5,7 +5,7 @@ os sensores, construir o mapa no processo e, depois, provar que o mapa
 construído é suficiente para reproduzir a rota ótima da parte 1.
 
 **Em uma linha:** explora com DFS lendo os sensores, terminando de volta na
-partida → BFS no mapa construído → executa a rota → só no fim pede o mapa real
+partida -> BFS no mapa construído -> executa a rota -> só no fim pede o mapa real
 para conferir que a rota é a mesma da parte 1.
 
 Para os conceitos de ROS e o funcionamento do simulador, veja
@@ -50,33 +50,6 @@ O nó reinicia o labirinto sozinho no começo, então dá para rodá-lo várias
 vezes seguidas, mesmo depois de uma vitória (por exemplo, logo depois da
 parte 1).
 
-## Passo a passo do que acontece
-
-```text
-Part2Mapper                                     Simulador (cg maze)
-     │                                                 │
- 0.  │ ── /reset (mesmo labirinto) ───────────────────►│
-     │  espera 3 s (o jogo recria o labirinto)         │
-     │                                                 │
- 1.  │  EXPLORAÇÃO (DFS)                               │
-     │   repete até a pilha esvaziar:                  │
-     │   ◄── /culling_games/robot_sensors ─────────────│   8 células ao redor
-     │   anota no mapa; escolhe uma vizinha nova       │
-     │   ── /move_command {direction} ────────────────►│
-     │   (num beco sem saída, volta um passo)          │
-     │   termina de volta na partida                   │
-     │                                                 │
- 2.  │  ROTA: BFS partida → alvo no mapa construído    │
-     │   ── /move_command ... ────────────────────────►│   o robô chega ao alvo
-     │                                                 │
- 3.  │  CONFERÊNCIA                                    │
-     │   ── /get_map (a única vez) ───────────────────►│
-     │   compara mapas e rotas                         │
-```
-
-O `/get_map` só é chamado na etapa 3, depois que a rota já foi calculada e
-executada. Ele não influencia em nada a navegação; serve só para provar que
-o resultado está certo.
 
 ## A exploração em detalhe
 
@@ -92,7 +65,7 @@ célula onde começou é `(0, 0)`, e cada movimento bem-sucedido soma o
 deslocamento da direção. Isso é **odometria**: saber a posição contando os
 próprios passos.
 
-O mapa é um dicionário `célula → valor`, que começa vazio e cresce conforme o
+O mapa é um dicionário `célula -> valor`, que começa vazio e cresce conforme o
 robô vê coisas. Uma célula que não está no dicionário é desconhecida. Isso
 evita ter que saber o tamanho do labirinto de antemão.
 
@@ -104,7 +77,7 @@ Ao chegar em uma célula nova, o robô lê o tópico
 ```text
  up_left │   up   │ up_right           b │ f │ b
 ─────────┼────────┼─────────          ───┼───┼───
-  left   │ (robô) │  right       →     b │ R │ f
+  left   │ (robô) │  right       ->     b │ R │ f
 ─────────┼────────┼─────────          ───┼───┼───
 down_left│  down  │down_right          b │ b │ b
 ```
@@ -127,32 +100,6 @@ a posição atual:
 3. Quando a pilha esvazia, a exploração acabou, e o robô está de volta na
    partida.
 
-Exemplo em um labirinto pequeno (`R` partida, `T` alvo, `|` parede). As
-vizinhas são testadas na ordem de `DIRECTIONS`: cima, baixo, esquerda,
-direita. Este é o rastro real do código nesse labirinto:
-
-```text
-|||||||        Passo  Movimento  Chega em   O que acontece
-|R  | |          1    right      (1,2)      célula nova
-||| | |          2    right      (1,3)      célula nova
-|T    |          3    down       (2,3)      célula nova
-|||||||          4    down       (3,3)      célula nova
-                 5    left       (3,2)      célula nova; o sensor da esquerda vê o T
-                 6    right      (3,3)      beco sem saída (o T não conta): volta
-                 7    right      (3,4)      célula nova
-                 8    right      (3,5)      célula nova
-                 9    up         (2,5)      célula nova
-                10    up         (1,5)      célula nova; beco sem saída
-             11-18    volta      ...        desempilha até a partida (1,1): fim
-```
-
-São 10 células visitadas e 18 movimentos, ou seja, 2 × (10 − 1): cada
-ligação entre células é percorrida uma vez na ida e uma na volta. Depois
-disso, a rota final tem 6 movimentos (`right, right, down, down, left,
-left`), a mesma que a BFS acha no mapa real.
-
-Na prática, o robô percorre cada corredor indo e voltando, como quem
-explora uma caverna com um fio amarrado na entrada.
 
 ### Por que a DFS visita tudo
 
@@ -201,7 +148,7 @@ mais rápido.
 Para começar do zero, o nó chama `/reset` antes de explorar. O simulador
 responde na hora, mas só aplica o *reset* no próximo quadro do Pygame, e
 aplicar é lento: ele recria a janela e recarrega as 18 imagens de vitória.
-Medido nesta máquina: **0,6 a 0,9 s**. Movimentos feitos nesse meio-tempo vão
+Medido no meu computador: **0,6 a 0,9 s**. Movimentos feitos nesse meio-tempo vão
 para o robô antigo e se perdem quando o novo robô aparece na partida.
 
 Nos testes reais, com uma espera de 0,5 s, o robô explorou umas 12 células e
@@ -294,9 +241,8 @@ alcançáveis. Os sensores são lidos uma vez por célula (V leituras).
 ## O código, função por função
 
 ### `nav_auto/explorer.py`: a exploração
-
-[Código](../src/nav_auto/nav_auto/explorer.py). Python puro, sem ROS: recebe
-`sense` e `move` como funções, então roda igual no nó e nos testes.
+Python puro, sem ROS: recebe `sense` e `move` como funções, então roda igual no nó e nos testes. 
+[código](../src/nav_auto/nav_auto/explorer.py)
 
 #### Constantes e funções auxiliares
 
@@ -315,7 +261,7 @@ Guarda o estado da exploração. Atributos:
 | `sense` | Função `sense() -> leitura`, um dicionário como `{'up': 'f', 'up_left': 'b', ...}`. |
 | `move` | Função `move(direção) -> bool` (`True` se o robô andou). |
 | `pos` | Posição atual, pela odometria. A partida é `(0, 0)`. |
-| `known` | O mapa: dicionário `célula → 'f'/'b'/'t'`. |
+| `known` | O mapa: dicionário `célula -> 'f'/'b'/'t'`. |
 | `visited` | Conjunto de células onde o robô já esteve. |
 | `target` | Posição do alvo (relativa), ou `None` enquanto não foi visto. |
 | `moves` | Total de movimentos feitos. |
@@ -373,8 +319,7 @@ diferentes, que deve ser vazia.
 
 ### `nav_auto/part2_node.py`: o nó da parte 2
 
-[Código](../src/nav_auto/nav_auto/part2_node.py). Faz a ponte entre o
-`Explorer` e o simulador.
+Faz a ponte entre o `Explorer` e o simulador. [código](../src/nav_auto/nav_auto/part2_node.py)
 
 #### Constantes
 
@@ -428,7 +373,7 @@ O roteiro:
    labirinto) e processa mensagens por `RESET_WAIT` segundos.
 1. Cria o `Explorer` com `self.sense` e `self.move` e chama `explore()`,
    medindo o tempo. Se o alvo não foi visto, avisa e para.
-2. Calcula a rota com `best_route()`, imprime o mapa construído com a rota e
+2. Calcula a rota com `best_route()`, printa o mapa construído com a rota e
    a executa com `follow`.
 3. Conferência: chama `/get_map`, reconstrói o mapa real, conta as
    diferenças com `compare_with_real`, roda a BFS da parte 1 no mapa real e
@@ -443,8 +388,7 @@ desliga o ROS.
 
 ### `test/test_explorer.py`: testes da exploração
 
-[Código](../src/nav_auto/test/test_explorer.py). Testa o `Explorer` sem o
-simulador, com um robô de mentira que lê os **mesmos CSVs** do simulador.
+Testa o `Explorer` sem o simulador, com um robô de mentira que lê os **mesmos CSVs** do simulador. [código](../src/nav_auto/test/test_explorer.py).
 
 | Nome | O que faz |
 | --- | --- |
@@ -484,18 +428,18 @@ movimentos de exploração são sempre 2 × (células − 1), já incluindo a vo
 
 ### No simulador de verdade
 
-`ros2 run nav_auto part2`, com o jogo aberto com janela, em 27/11/2026:
+`ros2 run nav_auto part2`, com o jogo aberto com janela:
 
 | Labirinto | Visitadas | Movimentos de exploração | Tempo de exploração | Rota (parte 2) | Rota (parte 1) | Diferenças no mapa |
 | --- | --- | --- | --- | --- | --- | --- |
 | `1.csv` | 391 | 780 | 9,2 s | 102 | 102 (idêntica) | 0 |
-| `3.csv` ¹ | 391 | 780 | 9,1 s | 192 | 192 (idêntica) | 0 |
+| `3.csv` | 391 | 780 | 9,1 s | 192 | 192 (idêntica) | 0 |
 | `5.csv` | 391 | 780 | 9,2 s | 204 | 204 (idêntica) | 0 |
 | `7.csv` | 391 | 780 | 9,3 s | 96 | 96 (idêntica) | 0 |
 | `test.csv` | 728 | 1454 | 16,9 s | 25 | 25 (idêntica) | 0 |
 | `--generate` | 391 | 780 | 9,2 s | 74 | 74 (idêntica) | 0 |
 
-¹ No `3.csv`, a parte 1 rodou antes no mesmo jogo e venceu. A parte 2
+No `3.csv`, a parte 1 rodou antes no mesmo jogo e venceu. A parte 2
 reiniciou o labirinto sozinha e funcionou.
 
 Os movimentos de exploração são exatamente os previstos pelos testes. O

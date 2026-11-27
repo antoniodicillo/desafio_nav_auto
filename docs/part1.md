@@ -3,8 +3,8 @@
 **Objetivo:** com acesso ao mapa completo do labirinto, encontrar a rota
 otimizada (com o menor número de movimentos) do robô até o alvo e executá-la.
 
-**Em uma linha:** pede o mapa → BFS acha o caminho mais curto → converte o
-caminho em `up`/`down`/`left`/`right` → manda um movimento por vez e confere
+**Em uma linha:** pede o mapa -> BFS acha o caminho mais curto -> converte o
+caminho em `up`/`down`/`left`/`right` -> manda um movimento por vez e confere
 cada um.
 
 Para os conceitos de ROS e o funcionamento do simulador, veja
@@ -50,27 +50,8 @@ ros2 run nav_auto part1 --ros-args -p step_delay:=0.0
 
 ## Passo a passo do que acontece
 
-```text
-Part1Navigator                         Simulador (cg maze)
-      │                                       │
- 0.   │  espera os serviços existirem         │
-      │                                       │
- 1.   │ ── /get_map ─────────────────────────►│
-      │ ◄─ grid achatado + dimensões ─────────│
-      │  reconstrói a matriz (grid_from_flat)
-      │  acha o robô 'r' e o alvo 't' (find_cell)
-      │                                       │
- 2.   │  BFS → caminho (lista de células)
- 3.   │  caminho → comandos (path_to_moves)
-      │  imprime o labirinto com a rota (render)
-      │                                       │
- 4.   │ ── /move_command {direction} ────────►│   (uma vez por passo)
-      │ ◄─ success, robot_pos, target_pos ────│
-      │  confere se robot_pos é a célula esperada
-```
-
 **0. Esperar o jogo.** Se o simulador ainda não estiver rodando, o nó
-imprime "Esperando o serviço..." a cada segundo e não faz mais nada.
+printa "Esperando o serviço..." a cada segundo e não faz mais nada.
 
 **1. Pedir o mapa.** O `/get_map` devolve a matriz inteira como uma lista
 única, linha após linha, mais as dimensões:
@@ -90,8 +71,8 @@ alvo. O nó avisa e para.
 caminho, a diferença de posição vira um comando:
 
 ```text
-(1,1) → (2,1)   linha +1    → 'down'
-(9,3) → (9,4)   coluna +1   → 'right'
+(1,1) -> (2,1)   linha +1    -> 'down'
+(9,3) -> (9,4)   coluna +1   -> 'right'
 ```
 
 **4. Executar.** Para cada comando, o nó chama `/move_command`, recebe a
@@ -117,17 +98,6 @@ menor número possível de movimentos.** Em um grafo não ponderado, a BFS
 sempre encontra o caminho mais curto, que é exatamente a "rota otimizada"
 pedida.
 
-### Exemplo em um labirinto pequeno
-
-```text
-Labirinto:            Distância da partida (os "anéis" da BFS):
-| | | | | |           | | | | | |
-| R . . . |           | 0 1 2 3 |
-| | | . | |           | | | 3 | |
-| T . . . |           | 6 5 4 5 |
-| | | | | |           | | | | | |
-```
-
 A BFS processa todas as células de distância 1 antes das de distância 2, e
 assim por diante. Quando ela tira o `T` da fila, a distância dele (6) é a
 menor possível.
@@ -135,15 +105,15 @@ menor possível.
 ### O algoritmo
 
 ```text
-fila      ← [início]
-veio_de   ← {início: nenhum}          # também serve como "visitados"
+fila      <- [início]
+veio_de   <- {início: nenhum}          # também serve como "visitados"
 
 enquanto a fila não estiver vazia:
-    célula ← remove o primeiro da fila
+    célula <- remove o primeiro da fila
     se célula é o alvo: reconstrói o caminho e termina
     para cada vizinho transitável da célula:
         se vizinho ainda não foi visitado:
-            veio_de[vizinho] ← célula
+            veio_de[vizinho] <- célula
             coloca vizinho no fim da fila
 
 se a fila esvaziar sem achar o alvo: não existe caminho
@@ -155,7 +125,7 @@ partida, obtemos o caminho de trás para frente; basta invertê-lo. No exemplo
 acima:
 
 ```text
-alvo (3,1) ← (3,2) ← (3,3) ← (2,3) ← (1,3) ← (1,2) ← (1,1) partida
+alvo (3,1) <- (3,2) <- (3,3) <- (2,3) <- (1,3) <- (1,2) <- (1,1) partida
 caminho = [(1,1), (1,2), (1,3), (2,3), (3,3), (3,2), (3,1)]
 comandos = right, right, down, down, left, left
 ```
@@ -185,9 +155,8 @@ Os arquivos da parte 2 (`explorer.py`, `part2_node.py`, `test_explorer.py`)
 estão em [part2.md](part2.md#o-código-função-por-função).
 
 ### `nav_auto/grid.py`: o grid e a BFS
-
-[Código](../src/nav_auto/nav_auto/grid.py). Python puro, sem ROS. É usado
-pela parte 1 e reaproveitado pela parte 2.
+Python puro, sem ROS. É usado pela parte 1 e reaproveitado pela parte 2. 
+[código](../src/nav_auto/nav_auto/grid.py)
 
 #### Constantes
 
@@ -234,7 +203,7 @@ A busca em largura descrita acima.
 
 - **Recebe:** a matriz, a célula de partida e a do alvo.
 - **Estruturas:** `queue`, uma `deque` (fila com inserção e remoção O(1) nas
-  pontas), e `came_from`, um dicionário `célula → célula anterior`. A
+  pontas), e `came_from`, um dicionário `célula -> célula anterior`. A
   partida entra com `None`. O dicionário serve também de conjunto de
   visitados: uma célula só entra na fila se ainda não estiver nele.
 - **Laço:** tira a primeira célula da fila (`popleft`). Se for o alvo,
@@ -252,7 +221,7 @@ O `_` no nome indica que é uma função auxiliar, só usada pela `bfs`.
 #### `path_to_moves(path)`
 
 Converte o caminho em comandos. Monta o dicionário inverso de `DIRECTIONS`
-(`(-1, 0) → 'up'`, ...) e, para cada par de células consecutivas, calcula a
+(`(-1, 0) -> 'up'`, ...) e, para cada par de células consecutivas, calcula a
 diferença `(l2 - l1, c2 - c1)` e procura o comando correspondente. Um
 caminho com N células gera N − 1 comandos.
 
@@ -265,8 +234,7 @@ matriz.
 
 ### `nav_auto/part1_node.py`: o nó da parte 1
 
-[Código](../src/nav_auto/nav_auto/part1_node.py). Faz a ponte entre a BFS e o
-simulador.
+Faz a ponte entre a BFS e o simulador. [código](../src/nav_auto/nav_auto/part1_node.py)
 
 #### `class Part1Navigator(Node)`
 
@@ -290,7 +258,7 @@ roda o laço do ROS até a resposta chegar. Devolve a resposta.
 #### `wait_for_services(self)`
 
 Para cada cliente, espera até 1 s o serviço aparecer na rede; enquanto ele
-não aparecer, imprime "Esperando o serviço..." e tenta de novo. Evita chamar
+não aparecer, printa "Esperando o serviço..." e tenta de novo. Evita chamar
 um serviço que ainda não existe, se o jogo for aberto depois.
 
 #### `run(self)`
@@ -303,7 +271,7 @@ alvo e `False` se algo deu errado.
    vencido e devolve `False`.
 2. **Planejamento:** roda `bfs`, medindo o tempo com `time.perf_counter`.
    Sem caminho, devolve `False`. Converte o caminho com `path_to_moves`,
-   registra o número de movimentos e imprime o labirinto com `render`.
+   registra o número de movimentos e printa o labirinto com `render`.
 3. **Execução:** para cada comando, monta um `MoveCmd.Request`, chama
    `/move_command` e compara `robot_pos` da resposta com a célula esperada
    (`path[i + 1]`). Se o movimento falhar ou o robô estiver em outro lugar,
@@ -321,8 +289,7 @@ ROS, mesmo se algo falhar no meio.
 
 ### `test/test_grid.py`: testes da BFS
 
-[Código](../src/nav_auto/test/test_grid.py). Usa um labirinto pequeno
-(`MAZE`, 5 × 7) com dois caminhos de mesmo tamanho até o alvo.
+Usa um labirinto pequeno (5 x 7) com dois caminhos de mesmo tamanho até o alvo. [código](../src/nav_auto/test/test_grid.py)
 
 | Teste | O que confere |
 | --- | --- |
@@ -350,57 +317,17 @@ matriz (lista de listas de letras).
 Testado em 24/11/2026 (e de novo em 26/11 no `1.csv`) no ambiente descrito
 em [setup.md](setup.md):
 
-| Labirinto | Tamanho | Partida → Alvo | Movimentos da rota | Tempo da BFS | Resultado |
+| Labirinto | Tamanho | Partida -> Alvo | Movimentos da rota | Tempo da BFS | Resultado |
 | --- | --- | --- | --- | --- | --- |
-| `test.csv` (sala aberta) | 29 × 29 | (1, 1) → (13, 14) | 25 | < 1 ms | Alvo alcançado |
-| `1.csv` | 29 × 29 | (1, 1) → (14, 14) | 102 | 0,24 ms | Alvo alcançado |
-| `7.csv` | 29 × 29 | (1, 1) → (14, 14) | 96 | 0,20 ms | Alvo alcançado |
-| `--generate` (aleatório) | 29 × 29 | (1, 1) → (14, 14) | 36 | 0,14 ms | Alvo alcançado |
+| `test.csv` (sala aberta) | 29 × 29 | (1, 1) -> (13, 14) | 25 | < 1 ms | Alvo alcançado |
+| `1.csv` | 29 × 29 | (1, 1) -> (14, 14) | 102 | 0,24 ms | Alvo alcançado |
+| `7.csv` | 29 × 29 | (1, 1) -> (14, 14) | 96 | 0,20 ms | Alvo alcançado |
+| `--generate` (aleatório) | 29 × 29 | (1, 1) -> (14, 14) | 36 | 0,14 ms | Alvo alcançado |
 
 No `test.csv`, que não tem paredes internas, a rota de 25 movimentos é igual
 à distância de Manhattan entre partida e alvo (12 linhas + 13 colunas), o
 menor valor possível. Isso confirma, em um caso fácil de verificar à mão, que
 a rota encontrada é ótima.
-
-### Exemplo de saída (`1.csv`)
-
-O nó imprime o labirinto com a rota planejada (`|` parede, `R` robô, `T`
-alvo, `·` rota):
-
-```text
-[INFO] [part1_navigator]: Mapa recebido: 29x29, robô em (1, 1), alvo em (14, 14)
-[INFO] [part1_navigator]: Rota ótima (BFS): 102 movimentos, calculada em 0.24 ms
-|||||||||||||||||||||||||||||
-|R|           |         |   |
-|·| ||||||| | ||||| ||| | | |
-|·|   |   | | |     | | | | |
-|·||| | ||| | | ||||| | | | |
-|·| | |   | |   |       | | |
-|·| | ||| | ||||| ||||||||| |
-|·|     | | |   | |       | |
-|·||||| | | | ||| | ||||| | |
-|···|     | |   | | |   | | |
-|||·||||||| ||| | | | | | | |
-| |·|·····|   |   | | | |   |
-| |·|·|||·||| ||| | ||| ||| |
-|···|·| |···|   |   |     | |
-|·|||·| |||·| T·||||| ||||| |
-|·····|···|·| |·|   |       |
-|||||||·|·|·|||·| | | |||||||
-|     |·|···|···| |   |     |
-| |||||·|||||·||| ||||| | |||
-|·····|·|    ·| |   |   |   |
-|·|||·|·| |||·| ||| | ||||| |
-|···|·|·| |···|   | |     | |
-|||·|·|·| |·||| ||| | ||||| |
-| |·|···| |·|   |   | |   | |
-| |·|||||||·||| | ||| | | | |
-| |·|  ···|·|   | |   | |   |
-| |·|||·|·|·| ||| ||||| ||| |
-|  ·····|···|           |   |
-|||||||||||||||||||||||||||||
-[INFO] [part1_navigator]: Alvo alcançado em (14, 14) com 102 movimentos!
-```
 
 ## Testes unitários
 
