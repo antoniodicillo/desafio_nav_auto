@@ -53,7 +53,7 @@ Quando tudo está rodando, existem dois programas (processos) independentes:
 ```text
  Terminal 1: ros2 run cg maze                 Terminal 2: ros2 run nav_auto part1 (ou part2)
 ┌─────────────────────────────────┐            ┌──────────────────────────────────┐
-│ Simulador (nó "Culling_Games")  │            │ Nossa solução (nó part1/part2)   │
+│ Simulador (nó "Culling_Games")  │            │ Minha solução (nó part1/part2)   │
 │                                 │  /get_map  │                                  │
 │  • guarda o labirinto (matriz)  │◄───────────│  • pede o mapa (só parte 1)      │
 │  • desenha a janela do Pygame   │/move_command  • decide para onde ir           │
@@ -67,12 +67,12 @@ Quando tudo está rodando, existem dois programas (processos) independentes:
 
 - O **simulador** (`src/culling_games`, código do professor) é o "mundo": dono
   do labirinto e da posição do robô.
-- A **nossa solução** (`src/nav_auto`) é o "cérebro": não tem acesso direto à
+- A **minha solução** (`src/nav_auto`) é o "cérebro": não tem acesso direto à
   memória do simulador. Tudo o que ela sabe e faz passa pelo ROS.
 
 O arquivo CSV do labirinto só é lido pelo simulador, quando ele começa (ou é
 reiniciado). Durante o jogo, o estado real é a matriz na memória do
-simulador; nossos nós nunca abrem o CSV nem a janela.
+simulador; meus nós nunca abrem o CSV nem a janela.
 
 ## 3. Conceitos de ROS 2 usados
 
@@ -88,8 +88,8 @@ conceitos que este projeto usa:
 | **Interface** | O formato dos dados de um serviço (`.srv`) ou de uma mensagem (`.msg`). | Pacote `cg_interfaces`. |
 | **QoS** (*quality of service*) | Regras de entrega. *Best effort* (perfil `sensor_data`) entrega o que der, sem reenviar o que se perdeu, e guarda só as últimas mensagens. | O tópico dos sensores usa `qos_profile_sensor_data`; quem assina precisa usar o mesmo perfil. |
 | **Spin** / executor | O laço que processa o que chegou (respostas de serviço, mensagens) e chama as funções de *callback*. Sem *spin*, nada é entregue. | `rclpy.spin_until_future_complete` (esperar uma resposta) e `rclpy.spin_once` (processar o que chegou). |
-| **Parâmetro** | Configuração de um nó passada na linha de comando. | `step_delay`, `verify`, ... (`--ros-args -p nome:=valor`). |
-| **Pacote** | Uma unidade de código ROS, com `package.xml`. | `cg`, `cg_interfaces`, `cg_teleop` (simulador) e `nav_auto` (nosso). |
+| **Parâmetro** | Configuração de um nó passada na linha de comando. | `step_delay` da parte 1 (`--ros-args -p step_delay:=0.0`). |
+| **Pacote** | Uma unidade de código ROS, com `package.xml`. | `cg`, `cg_interfaces`, `cg_teleop` (simulador) e `nav_auto` (meu). |
 | **Workspace** e **colcon** | Uma pasta com `src/` cheia de pacotes; `colcon build` compila todos e instala em `install/`. `source install/setup.bash` faz o terminal enxergá-los. | A raiz deste repositório. |
 | **Entry point** | O nome do executável que `ros2 run pacote nome` roda, definido no `setup.py`. | `part1` e `part2` em `src/nav_auto/setup.py`. |
 
@@ -135,7 +135,7 @@ seguintes a linha 1, e assim por diante.
 ## 4. O simulador por dentro
 
 O código do simulador está em `src/culling_games/src/cg/cg/`. Ele é um
-submódulo git: o código é do professor, e nós só o usamos.
+submódulo git: o código é do professor, e eu só o uso.
 
 ### 4.1 O labirinto
 
@@ -238,7 +238,7 @@ A última linha da tabela é o motivo de usar os dois: a BFS é ótima para
 para **explorar** com um robô de verdade, que só consegue andar para uma
 célula vizinha por vez.
 
-### Organização do nosso código
+### Organização do meu código
 
 ```text
 src/nav_auto/
@@ -336,7 +336,7 @@ sudo apt install -y ros-jazzy-desktop ros-dev-tools
 sudo apt install -y python3-pygame python3-colcon-common-extensions python3-pytest git
 ```
 
-> Usamos o Pygame do `apt` (e não do `pip`) porque o Ubuntu 24.04 bloqueia
+> Usei o Pygame do `apt` (e não do `pip`) porque o Ubuntu 24.04 bloqueia
 > `pip install` no Python do sistema, e o ROS 2 usa esse Python.
 
 ### Passo 6: Carregar o ROS 2 em cada terminal
@@ -393,7 +393,7 @@ git -C src/culling_games config core.autocrlf false
 > **Por que desativar o `autocrlf`?** O Git no Windows converte as quebras de
 > linha para o formato do Windows (CRLF). O código roda no Linux, que espera
 > LF; arquivos com CRLF quebram scripts e o build. O `.gitattributes` deste
-> repositório já força LF nos nossos arquivos; o comando acima garante o
+> repositório já força LF nos meus arquivos; o comando acima garante o
 > mesmo dentro do submódulo.
 
 No Ubuntu, entre na mesma pasta pelo caminho `/mnt/c/...`. Neste computador:
@@ -408,7 +408,7 @@ cd /mnt/c/Users/anton/OneDrive/Documentos/GitHub/desafio_nav_auto
 > OneDrive durante o build.
 
 O simulador entra como **submódulo git** em `src/culling_games`, separado do
-nosso código. Para atualizá-lo:
+meu código. Para atualizá-lo:
 
 ```bash
 git submodule update --remote src/culling_games
@@ -469,7 +469,7 @@ Os testes não precisam do simulador aberto:
 PYTHONPATH=src/nav_auto python3 -m pytest src/nav_auto/test
 ```
 
-Resultado esperado: `19 passed`.
+Resultado esperado: `16 passed`.
 
 ## 7. Verificação do ambiente
 
@@ -483,7 +483,7 @@ Testes feitos nesta máquina (24/11 e 26/11/2026):
 | `/move_command` com `direction: right` | OK: `success=True`, `robot_pos=[1, 2]`, `target_pos=[13, 14]` |
 | `/get_map` | OK: grade 29 × 29 |
 | Tópico `/culling_games/robot_sensors` | 100 mensagens/s, como o código pede, enquanto o relógio está estável. Com o relógio pulando (Passo 7), o tópico para depois de 2 a 4 s. |
-| Testes unitários | `19 passed` |
+| Testes unitários | `16 passed` |
 
 Avisos esperados, que podem ser ignorados:
 
@@ -508,8 +508,7 @@ caminho `/mnt/c/...`.
 | `The build time path ".../install/cg_interfaces" doesn't exist` | A pasta do repositório foi movida ou renomeada depois do build | `rm -rf build install log`, `colcon build` e `source install/setup.bash` em um terminal novo |
 | Janela do Pygame abre, mas fica em branco | O WSLg travou | `wsl --shutdown` no PowerShell e abrir o Ubuntu de novo |
 | Janela do Pygame não abre | WSLg desativado ou WSL desatualizado | `wsl --update` e `wsl --shutdown` no PowerShell |
-| Os sensores param de publicar depois de alguns segundos (a parte 2 acusa "Nenhuma leitura válida dos sensores"), mas os serviços funcionam | O relógio do WSL está pulando (dois serviços de horário brigando) | [Passo 7](#passo-7-evitar-saltos-de-relógio-no-wsl) e reiniciar o jogo |
-| A parte 2 acusa "Odometria ... não bate com a posição informada" | O *reset* do começo foi aplicado no meio da exploração | Aumentar a espera: `ros2 run nav_auto part2 --ros-args -p reset_wait:=5.0` |
+| Os sensores param de publicar depois de alguns segundos (a parte 2 acusa "Os sensores pararam de publicar"), mas os serviços funcionam | O relógio do WSL está pulando (dois serviços de horário brigando) | [Passo 7](#passo-7-evitar-saltos-de-relógio-no-wsl) e reiniciar o jogo |
 | Duas instâncias do jogo respondendo ao mesmo tempo (movimentos e sensores sem sentido) | Um `ros2 run cg maze` antigo continua rodando em outro terminal | Fechar todos os jogos (`pkill -f lib/cg/maze`) e abrir só um |
 | `colcon build` muito lento ou erro de arquivo travado | OneDrive sincronizando `build/`, `install/` ou `log/` | Pausar o OneDrive durante o build |
 | `/usr/bin/env: 'python3\r': No such file or directory` | Arquivos com quebra de linha CRLF | `git config core.autocrlf false` e refazer o checkout (Passo 8) |

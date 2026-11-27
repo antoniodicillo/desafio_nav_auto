@@ -1,4 +1,4 @@
-# Desafio de Navegação Autônoma
+# Ponderada - Mapeamento do Labirinto
 
 Solução para o desafio de navegação autônoma em labirinto usando ROS 2 Jazzy e
 o simulador [culling_games](https://github.com/rmnicola/culling_games).
@@ -25,24 +25,23 @@ BFS sempre acha o caminho com o menor número de movimentos.
 
 1. **Explora com DFS:** em cada célula nova, lê os 8 sensores
    (`/culling_games/robot_sensors`) e anota o que viu; anda para uma vizinha
-   livre ainda não visitada ou, num beco sem saída, volta um passo. Para
-   quando não sobra nenhuma célula alcançável sem visitar. O robô vê o alvo
-   pelos sensores, mas não entra nele, porque isso terminaria o jogo.
-2. **Volta à partida** pelo caminho mais curto no próprio mapa.
-3. **Planeja e executa** a rota até o alvo com a mesma BFS da parte 1, mas
+   livre ainda não visitada ou, num beco sem saída, volta um passo. Termina
+   quando já visitou tudo, de volta na partida. O robô vê o alvo pelos
+   sensores, mas não entra nele, porque isso terminaria o jogo.
+2. **Planeja e executa** a rota até o alvo com a mesma BFS da parte 1, mas
    no mapa construído.
-4. **Confere:** só então pede o mapa real e compara. O mapa construído deve
+3. **Confere:** só então pede o mapa real e compara. O mapa construído deve
    ter zero diferenças, e a rota deve ser a mesma da parte 1.
 
 ## Resultados
 
 | Labirinto | Parte 1 (rota) | Parte 2 (exploração) | Parte 2 (rota) | Mapa construído |
 | --- | --- | --- | --- | --- |
-| `1.csv` | 102 movimentos | 678 movimentos, 8,7 s | 102, idêntica à da parte 1 | 0 diferenças |
-| `5.csv` | 204 movimentos | 686 movimentos, 8,7 s | 204, idêntica | 0 diferenças |
-| `7.csv` | 96 movimentos | 740 movimentos, 9,0 s | 96, idêntica | 0 diferenças |
-| `test.csv` | 25 movimentos | 752 movimentos, 14,7 s | 25, idêntica | 0 diferenças |
-| `--generate` | 48 movimentos | 680 movimentos, 8,7 s | 48, idêntica | 0 diferenças |
+| `1.csv` | 102 movimentos | 780 movimentos, 9,2 s | 102, idêntica à da parte 1 | 0 diferenças |
+| `5.csv` | 204 movimentos | 780 movimentos, 9,2 s | 204, idêntica | 0 diferenças |
+| `7.csv` | 96 movimentos | 780 movimentos, 9,3 s | 96, idêntica | 0 diferenças |
+| `test.csv` | 25 movimentos | 1454 movimentos, 16,9 s | 25, idêntica | 0 diferenças |
+| `--generate` | 74 movimentos | 780 movimentos, 9,2 s | 74, idêntica | 0 diferenças |
 
 Os testes unitários repetem a parte 2 nos 11 labirintos do simulador, sem
 precisar do jogo aberto: em todos, o robô visita todas as células
@@ -61,7 +60,7 @@ desafio_nav_auto/
 │   └── part2.md                # parte 2, com o código função por função
 └── src/
     ├── culling_games/          # simulador (submódulo git, código do professor)
-    └── nav_auto/               # nossa solução (pacote ROS 2)
+    └── nav_auto/               # minha solução (pacote ROS 2)
         ├── nav_auto/
         │   ├── grid.py         # grid e BFS (sem ROS), usado nas duas partes
         │   ├── part1_node.py   # nó da parte 1
@@ -102,12 +101,3 @@ Testes (não precisam do jogo aberto):
 ```bash
 PYTHONPATH=src/nav_auto python3 -m pytest src/nav_auto/test
 ```
-
-### Se a parte 2 não funcionar
-
-- **"Nenhuma leitura válida dos sensores":** o relógio do WSL provavelmente
-  está pulando, o que congela o tópico dos sensores do simulador. Veja o
-  [Passo 7 do setup](docs/setup.md#passo-7-evitar-saltos-de-relógio-no-wsl).
-- **Muito lenta:** o jogo está rodando sem janela. Com a janela aberta, a
-  exploração leva cerca de 9 s.
-- Outros problemas: [docs/setup.md, seção 9](docs/setup.md#9-problemas-comuns).
